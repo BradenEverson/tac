@@ -130,3 +130,44 @@ test "Test a simple binary op AST" {
     try std.testing.expectEqual(1, ir_g.ir_stream.items.len);
     try std.testing.expectEqual(expected, ir_g.ir_stream.items[0]);
 }
+
+test "Complex AST parsing" {
+    // Expression to parse: A = 10 * 9 - (5 / 8)
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+
+    const a: Expr = .{ .literal = .{ .number = 10 } };
+    const b: Expr = .{ .literal = .{ .number = 9 } };
+
+    const c: Expr = .{ .literal = .{ .number = 5 } };
+    const d: Expr = .{ .literal = .{ .number = 8 } };
+
+    const c_div_d: Expr = .{ .binary_op = .{ .op = .div, .left = &c, .right = &d } };
+    const a_mul_b: Expr = .{ .binary_op = .{ .op = .mul, .left = &a, .right = &b } };
+
+    const result: Expr = .{ .binary_op = .{ .op = .sub, .left = &a_mul_b, .right = &c_div_d } };
+    const assign: Expr = .{ .assignment = .{ .name = "A", .val = &result } };
+
+    const ast = [1]Expr{assign};
+
+    var ir_g = TacIrGenerator.init(alloc, &ast);
+    defer ir_g.deinit();
+
+    try ir_g.generate();
+
+    try std.testing.expectEqual(4, ir_g.ir_stream.items.len);
+
+    const expect_first = ThreeAddressCode{ .op = .{ .binary_op = .mul }, .arg1 = .{ .literal = .{ .number = 10 } }, .arg2 = .{ .literal = .{ .number = 9 } } };
+    try std.testing.expectEqual(expect_first, ir_g.ir_stream.items[0]);
+
+    const expect_second = ThreeAddressCode{ .op = .{ .binary_op = .div }, .arg1 = .{ .literal = .{ .number = 5 } }, .arg2 = .{ .literal = .{ .number = 8 } } };
+    try std.testing.expectEqual(expect_second, ir_g.ir_stream.items[1]);
+
+    const expect_third = ThreeAddressCode{ .op = .{ .binary_op = .sub }, .arg1 = .{ .reference = 0 }, .arg2 = .{ .reference = 1 } };
+    try std.testing.expectEqual(expect_third, ir_g.ir_stream.items[2]);
+
+    const expect_forth = ThreeAddressCode{ .op = .assignment, .arg1 = .{ .variable = "A" }, .arg2 = .{ .reference = 2 } };
+    try std.testing.expectEqual(expect_forth, ir_g.ir_stream.items[3]);
+}

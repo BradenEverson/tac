@@ -4,6 +4,7 @@ const std = @import("std");
 
 const tokenizer = @import("tokenizer.zig");
 const Token = tokenizer.Token;
+const TokenTag = tokenizer.TokenTag;
 
 pub const Expr = union(enum) {
     assignment: struct { name: []const u8, val: *Expr },
@@ -20,6 +21,10 @@ pub const BinaryOp = enum {
     sub,
     mul,
     div,
+};
+
+pub const ParserError = error{
+    UnexpectedToken,
 };
 
 pub const Parser = struct {

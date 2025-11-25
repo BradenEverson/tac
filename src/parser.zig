@@ -34,6 +34,14 @@ pub const Parser = struct {
             .cursor = 0,
         };
     }
+
+    pub fn peek(self: *const Parser) ?Token {
+        if (self.cursor + 1 < self.tokens.len) {
+            return self.tokens[self.cursor];
+        } else {
+            return null;
+        }
+    }
 };
 
 test "create a parser" {
@@ -46,4 +54,5 @@ test "create a parser" {
     const p = Parser.init(alloc, &tokens);
 
     try std.testing.expectEqual(0, p.cursor);
+    try std.testing.expectEqual(null, p.peek());
 }

@@ -7,11 +7,16 @@ const Literal = parser.Literal;
 const BinaryOp = parser.BinaryOp;
 const Expr = parser.Expr;
 
-pub const ThreeAddressCode = union(enum) {
-    /// A raw value assignment to either a literal or a previous variable
-    value: Literal,
-    /// A binary operation assignment
-    binary: struct { left: Operand, op: BinaryOp, right: Operand },
+pub const ThreeAddressCode = struct {
+    op: Operator,
+    arg1: Operand,
+    arg2: Operand,
+};
+
+pub const Operator = enum {
+    plus,
+    minus,
+    assignment,
 };
 
 pub const Operand = union(enum) {
@@ -19,6 +24,8 @@ pub const Operand = union(enum) {
     literal: Literal,
     /// A reference to a previous TAC (i.e. t2 = t1 * 5)
     reference: usize,
+    /// A variable tag (i.e. "a")
+    variable: []const u8,
 };
 
 pub const TacIrGenerator = struct {

@@ -27,7 +27,30 @@ pub const TacIrGenerator = struct {
 
     ast: []const Expr,
 
+    pub fn init(alloc: std.mem.Allocator, ast: []const Expr) TacIrGenerator {
+        return TacIrGenerator{
+            .ir_stream = std.ArrayList(ThreeAddressCode){},
+            .alloc = alloc,
+            .ast = ast,
+        };
+    }
+
+    pub fn deinit(self: *TacIrGenerator) void {
+        self.ir_stream.deinit(self.alloc);
+    }
+
     pub fn generate(self: *TacIrGenerator) !void {
         _ = self;
     }
 };
+
+test "Init generator" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    const ast: [0]Expr = .{};
+
+    var ir_g = TacIrGenerator.init(alloc, &ast);
+    defer ir_g.deinit();
+}

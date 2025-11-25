@@ -1,5 +1,10 @@
 //! Core Parser and AST definition
 
+const std = @import("std");
+
+const tokenizer = @import("tokenizer.zig");
+const Token = tokenizer.Token;
+
 pub const Expr = union(enum) {
     assignment: struct { name: []const u8, val: *Expr },
     binary_op: struct { left: *Expr, op: BinaryOp, right: *Expr },
@@ -16,3 +21,29 @@ pub const BinaryOp = enum {
     mul,
     div,
 };
+
+pub const Parser = struct {
+    tokens: []const Token,
+    cursor: usize,
+    alloc: std.mem.Allocator,
+
+    pub fn init(alloc: std.mem.Allocator, tokens: []const Token) Parser {
+        return Parser{
+            .alloc = alloc,
+            .tokens = tokens,
+            .cursor = 0,
+        };
+    }
+};
+
+test "create a parser" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    const tokens: [0]Token = .{};
+
+    const p = Parser.init(alloc, &tokens);
+
+    try std.testing.expectEqual(0, p.cursor);
+}

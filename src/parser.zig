@@ -8,7 +8,7 @@ const TokenTag = tokenizer.TokenTag;
 
 pub const Expr = union(enum) {
     assignment: struct { name: []const u8, val: *Expr },
-    binary_op: struct { left: *Expr, op: BinaryOp, right: *Expr },
+    binary_op: struct { left: *const Expr, op: BinaryOp, right: *const Expr },
     literal: Literal,
 };
 

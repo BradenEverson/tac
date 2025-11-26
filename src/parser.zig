@@ -10,6 +10,7 @@ pub const Expr = union(enum) {
     assignment: struct { name: []const u8, val: *const Expr },
     binary_op: struct { left: *const Expr, op: BinaryOp, right: *const Expr },
     literal: Literal,
+    variable: []const u8,
 };
 
 pub const Literal = union(enum) {

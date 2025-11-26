@@ -71,6 +71,9 @@ pub const TacIrGenerator = struct {
             .literal => |l| {
                 return .{ .literal = l };
             },
+            .variable => |v| {
+                return .{ .variable = v };
+            },
         }
     }
 

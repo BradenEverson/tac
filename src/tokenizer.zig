@@ -14,6 +14,7 @@ pub const TokenTag = enum {
     equals,
     semicolon,
     number,
+    eof,
 };
 
 pub const Token = struct {
@@ -133,6 +134,8 @@ pub fn tokenize(stream: []const u8, tokens: *std.ArrayList(Token), alloc: std.me
             try tokens.append(alloc, tok);
         }
     }
+
+    try tokens.append(alloc, .{ .col = col, .line = line, .tag = .eof, .data = undefined });
 }
 
 test "basic tokenize" {

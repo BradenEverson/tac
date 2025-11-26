@@ -69,6 +69,21 @@ pub const Parser = struct {
     fn at_end(self: *Parser) bool {
         return self.peek() == .eof;
     }
+
+    pub fn parse(self: *Parser, ast: *std.ArrayList(*const Expr)) !void {
+        while (!self.at_end()) {
+            const expr = try self.statement();
+            try ast.append(expr);
+        }
+    }
+
+    pub fn statement(self: *Parser) !*const Expr {
+        const tag = self.peek();
+
+        switch (tag) {
+            else => return ParserError.UnexpectedToken,
+        }
+    }
 };
 
 test "create a parser" {

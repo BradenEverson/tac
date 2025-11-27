@@ -10,6 +10,8 @@ const ir = @import("ir.zig");
 const TacIrGenerator = ir.TacIrGenerator;
 const ThreeAddressCode = ir.ThreeAddressCode;
 
+const Assembler = @import("assembler.zig").Assembler;
+
 pub fn main() void {
     const alloc = std.heap.page_allocator;
 
@@ -39,9 +41,10 @@ pub fn main() void {
 
         const tac = ir_generator.ir_stream.items;
 
-        for (tac) |instr| {
-            std.debug.print("{any}\n", .{instr});
-        }
+        var assembler = Assembler.init("generated.S", tac) catch @panic("Failed to create assembly file");
+        defer assembler.deinit();
+
+        assembler.translate(alloc) catch @panic("Failed to generate assembly");
     } else {
         std.debug.print("Usage: ./tac {{file}}\n", .{});
     }

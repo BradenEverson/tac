@@ -19,8 +19,7 @@ pub const Assembler = struct {
     }
 
     pub fn translate(self: *Assembler, alloc: std.mem.Allocator) !void {
-        _ = alloc;
-        try self.fd.write(
+        _ = try self.fd.write(
             \\section .bss
             \\section .text
             \\global _start
@@ -29,8 +28,16 @@ pub const Assembler = struct {
         );
 
         for (self.ir, 0..) |tac, i| {
-            _ = tac;
-            _ = i;
+            const instr = try std.fmt.allocPrint(alloc, "{any}, {d}\n", .{ tac, i });
+            _ = try self.fd.write(instr);
         }
+
+        _ = try self.fd.write(
+            \\
+            \\mov rax, 60
+            \\mov rdi, 0
+            \\syscall
+            \\
+        );
     }
 };

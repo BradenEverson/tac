@@ -31,9 +31,9 @@ pub const TacIrGenerator = struct {
     ir_stream: std.ArrayList(ThreeAddressCode),
     alloc: std.mem.Allocator,
 
-    ast: []const Expr,
+    ast: []*const Expr,
 
-    pub fn init(alloc: std.mem.Allocator, ast: []const Expr) TacIrGenerator {
+    pub fn init(alloc: std.mem.Allocator, ast: []*const Expr) TacIrGenerator {
         return TacIrGenerator{
             .ir_stream = std.ArrayList(ThreeAddressCode){},
             .alloc = alloc,
@@ -79,7 +79,7 @@ pub const TacIrGenerator = struct {
 
     pub fn generate(self: *TacIrGenerator) !void {
         for (self.ast) |expr| {
-            _ = try self.generate_single(&expr);
+            _ = try self.generate_single(expr);
         }
     }
 };
@@ -89,7 +89,7 @@ test "Init generator" {
     defer _ = gpa.deinit();
 
     const alloc = gpa.allocator();
-    const ast: [0]Expr = .{};
+    const ast: [0]*const Expr = .{};
 
     var ir_g = TacIrGenerator.init(alloc, &ast);
     defer ir_g.deinit();
@@ -100,7 +100,8 @@ test "Test a simple AST" {
     defer _ = gpa.deinit();
 
     const alloc = gpa.allocator();
-    const ast = [1]Expr{.{ .literal = .{ .number = 10 } }};
+    const l: Expr = .{ .literal = .{ .number = 10 } };
+    var ast = [1]*const Expr{&l};
 
     var ir_g = TacIrGenerator.init(alloc, &ast);
     defer ir_g.deinit();
@@ -121,7 +122,7 @@ test "Test a simple binary op AST" {
 
     const binop: Expr = .{ .binary_op = .{ .left = &a, .op = .add, .right = &b } };
 
-    const ast = [1]Expr{binop};
+    var ast = [1]*const Expr{&binop};
 
     var ir_g = TacIrGenerator.init(alloc, &ast);
     defer ir_g.deinit();
@@ -153,7 +154,7 @@ test "Complex AST parsing" {
     const result: Expr = .{ .binary_op = .{ .op = .sub, .left = &a_mul_b, .right = &c_div_d } };
     const assign: Expr = .{ .assignment = .{ .name = "A", .val = &result } };
 
-    const ast = [1]Expr{assign};
+    var ast = [1]*const Expr{&assign};
 
     var ir_g = TacIrGenerator.init(alloc, &ast);
     defer ir_g.deinit();

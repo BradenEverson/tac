@@ -27,7 +27,7 @@ pub const Register = switch (builtin.cpu.arch) {
 
 pub const RegisterAllocatedInstruction = struct {
     instr: ThreeAddressCode,
-    register: Register,
+    register: ?Register,
 };
 
 pub const RegisterAllocator = struct {
@@ -45,6 +45,12 @@ pub const RegisterAllocator = struct {
         }
 
         return self;
+    }
+
+    pub fn solve(self: *RegisterAllocator, output: std.ArrayList(RegisterAllocatedInstruction), alloc: std.mem.Allocator) !void {
+        _ = self;
+        _ = output;
+        _ = alloc;
     }
 };
 

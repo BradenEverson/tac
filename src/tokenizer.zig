@@ -11,6 +11,8 @@ pub const TokenTag = enum {
     ident,
     plus,
     minus,
+    star,
+    slash,
     equals,
     semicolon,
     number,
@@ -62,6 +64,26 @@ pub fn tokenize(stream: []const u8, tokens: *std.ArrayList(Token), alloc: std.me
                     .line = line,
                     .col = start_col,
                     .data = number,
+                };
+            },
+            '*' => {
+                idx += 1;
+                col += 1;
+                curr = Token{
+                    .tag = .star,
+                    .line = line,
+                    .col = start_col,
+                    .data = stream[start_idx..idx],
+                };
+            },
+            '/' => {
+                idx += 1;
+                col += 1;
+                curr = Token{
+                    .tag = .slash,
+                    .line = line,
+                    .col = start_col,
+                    .data = stream[start_idx..idx],
                 };
             },
             '+' => {

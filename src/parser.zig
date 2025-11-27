@@ -1,5 +1,3 @@
-//! Core Parser and AST definition
-
 const std = @import("std");
 
 const tokenizer = @import("tokenizer.zig");
@@ -26,6 +24,8 @@ pub const BinaryOp = enum {
 
 pub const ParserError = error{
     UnexpectedToken,
+    ExpectedSemicolon,
+    OutOfTokens,
 };
 
 pub const Parser = struct {
@@ -46,27 +46,27 @@ pub const Parser = struct {
     }
 
     fn peek(self: *const Parser) TokenTag {
+        if (self.cursor >= self.tokens.len) {
+            return .eof;
+        }
         return self.tokens[self.cursor].tag;
     }
 
     fn peek_n(self: *const Parser, n: comptime_int) TokenTag {
-        if (self.cursor + n < self.tokens.len) {
-            return self.tokens[self.cursor + n].tag;
-        } else {
+        if (self.cursor + n >= self.tokens.len) {
             return .eof;
         }
+        return self.tokens[self.cursor + n].tag;
     }
 
     fn advance(self: *Parser) void {
-        if (self.cursor >= self.tokens.len - 1) {
-            self.cursor = self.tokens.len - 1;
-        } else {
+        if (self.cursor < self.tokens.len) {
             self.cursor += 1;
         }
     }
 
     fn consume(self: *Parser, tok: TokenTag) ParserError!void {
-        if (std.meta.eql(self.peek().?, tok)) {
+        if (self.peek() == tok) {
             self.advance();
             return;
         } else {
@@ -81,23 +81,109 @@ pub const Parser = struct {
     pub fn parse(self: *Parser, ast: *std.ArrayList(*const Expr)) !void {
         while (!self.at_end()) {
             const expr = try self.statement();
-            try ast.append(expr);
+            try ast.append(self.arena.allocator(), expr);
         }
     }
 
     pub fn statement(self: *Parser) !*const Expr {
-        const tag = self.peek();
-
-        switch (tag) {
-            .ident => return self.ident_statement(),
-            else => return ParserError.UnexpectedToken,
-        }
+        const expr = try self.expression();
+        try self.consume(.semicolon);
+        return expr;
     }
 
-    pub fn ident_statement(self: *Parser) !*const Expr {
-        const after_ident = self.peek_n(1);
+    pub fn expression(self: *Parser) !*const Expr {
+        if (self.peek() == .ident and self.peek_n(1) == .equals) {
+            const name = self.tokens[self.cursor].data;
+            self.advance();
+            self.advance();
 
-        switch (after_ident) {
+            const val = try self.expression();
+
+            const assignment_expr = try self.arena.allocator().create(Expr);
+            assignment_expr.* = .{
+                .assignment = .{
+                    .name = name,
+                    .val = val,
+                },
+            };
+            return assignment_expr;
+        }
+
+        return self.term();
+    }
+
+    fn term(self: *Parser) !*const Expr {
+        var left = try self.factor();
+
+        while (self.peek() == .plus or self.peek() == .minus) {
+            const op_token = self.tokens[self.cursor];
+            self.advance();
+            const right = try self.factor();
+
+            const op = switch (op_token.tag) {
+                .plus => BinaryOp.add,
+                .minus => BinaryOp.sub,
+                else => unreachable,
+            };
+
+            const binary_op_expr = try self.arena.allocator().create(Expr);
+            binary_op_expr.* = .{
+                .binary_op = .{
+                    .left = left,
+                    .op = op,
+                    .right = right,
+                },
+            };
+            left = binary_op_expr;
+        }
+
+        return left;
+    }
+
+    fn factor(self: *Parser) !*const Expr {
+        var left = try self.primary();
+
+        while (self.peek() == .star or self.peek() == .slash) {
+            const op_token = self.tokens[self.cursor];
+            self.advance();
+            const right = try self.primary();
+
+            const op = switch (op_token.tag) {
+                .star => BinaryOp.mul,
+                .slash => BinaryOp.div,
+                else => unreachable,
+            };
+
+            const binary_op_expr = try self.arena.allocator().create(Expr);
+            binary_op_expr.* = .{
+                .binary_op = .{
+                    .left = left,
+                    .op = op,
+                    .right = right,
+                },
+            };
+            left = binary_op_expr;
+        }
+
+        return left;
+    }
+
+    fn primary(self: *Parser) !*const Expr {
+        const current_token = self.tokens[self.cursor];
+        self.advance();
+
+        switch (current_token.tag) {
+            .number => {
+                const number_val = try std.fmt.parseInt(i64, current_token.data, 10);
+                const literal_expr = try self.arena.allocator().create(Expr);
+                literal_expr.* = .{ .literal = .{ .number = number_val } };
+                return literal_expr;
+            },
+            .ident => {
+                const variable_expr = try self.arena.allocator().create(Expr);
+                variable_expr.* = .{ .variable = current_token.data };
+                return variable_expr;
+            },
             else => return ParserError.UnexpectedToken,
         }
     }
@@ -110,7 +196,29 @@ test "create a parser" {
     const alloc = gpa.allocator();
     const tokens: [0]Token = .{};
 
-    const p = Parser.init(alloc, &tokens);
+    var p = Parser.init(alloc, &tokens);
+    defer p.deinit();
 
     try std.testing.expectEqual(0, p.cursor);
+}
+
+test "simple statement parsing" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
+    const tokens = [5]Token{ .{ .tag = .number, .data = "1", .line = 0, .col = 1 }, .{ .tag = .plus, .data = "+", .line = 0, .col = 2 }, .{ .tag = .number, .data = "2", .line = 0, .col = 3 }, .{ .tag = .semicolon, .data = ";", .line = 0, .col = 1 }, .{ .tag = .eof, .data = "", .line = 0, .col = 1 } };
+
+    var p = Parser.init(alloc, &tokens);
+    defer p.deinit();
+
+    var ast = std.ArrayList(*const Expr){};
+
+    try p.parse(&ast);
+
+    try std.testing.expectEqual(1, ast.items.len);
+
+    try std.testing.expectEqual(.add, ast.items[0].binary_op.op);
+    try std.testing.expectEqual(1, ast.items[0].binary_op.left.literal.number);
+    try std.testing.expectEqual(2, ast.items[0].binary_op.right.literal.number);
 }

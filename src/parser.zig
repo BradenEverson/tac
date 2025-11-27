@@ -49,6 +49,14 @@ pub const Parser = struct {
         return self.tokens[self.cursor].tag;
     }
 
+    fn peek_n(self: *const Parser, n: comptime_int) TokenTag {
+        if (self.cursor + n < self.tokens.len) {
+            return self.tokens[self.cursor + n].tag;
+        } else {
+            return .eof;
+        }
+    }
+
     fn advance(self: *Parser) void {
         if (self.cursor >= self.tokens.len - 1) {
             self.cursor = self.tokens.len - 1;
@@ -81,6 +89,15 @@ pub const Parser = struct {
         const tag = self.peek();
 
         switch (tag) {
+            .ident => return self.ident_statement(),
+            else => return ParserError.UnexpectedToken,
+        }
+    }
+
+    pub fn ident_statement(self: *Parser) !*const Expr {
+        const after_ident = self.peek_n(1);
+
+        switch (after_ident) {
             else => return ParserError.UnexpectedToken,
         }
     }

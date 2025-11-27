@@ -18,7 +18,19 @@ pub const Assembler = struct {
         self.fd.close();
     }
 
-    pub fn translate(self: *Assembler) void {
-        _ = self;
+    pub fn translate(self: *Assembler, alloc: std.mem.Allocator) !void {
+        _ = alloc;
+        try self.fd.write(
+            \\section .bss
+            \\section .text
+            \\global _start
+            \\_start:
+            \\
+        );
+
+        for (self.ir, 0..) |tac, i| {
+            _ = tac;
+            _ = i;
+        }
     }
 };

@@ -47,7 +47,7 @@ pub const RegisterAllocator = struct {
         return self;
     }
 
-    pub fn solve(self: *RegisterAllocator, output: std.ArrayList(RegisterAllocatedInstruction), alloc: std.mem.Allocator) !void {
+    pub fn solve(self: *RegisterAllocator, output: *std.ArrayList(RegisterAllocatedInstruction), alloc: std.mem.Allocator) !void {
         _ = self;
         _ = output;
         _ = alloc;

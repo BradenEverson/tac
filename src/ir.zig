@@ -20,7 +20,7 @@ pub const Operator = union(enum) {
     pub fn toAsm(self: *const Operator) []const u8 {
         return switch (self.*) {
             .binary_op => |b| b.toAsm(),
-            .assignment => @panic("todo"),
+            .assignment => "mov",
         };
     }
 };
@@ -36,6 +36,13 @@ pub const Operand = union(enum) {
     pub fn dep_on(self: *const Operand, ref: usize) bool {
         return switch (self.*) {
             .reference => |r| r == ref,
+            else => false,
+        };
+    }
+
+    pub fn dep_on_var(self: *const Operand, ref: []const u8) bool {
+        return switch (self.*) {
+            .variable => |v| std.mem.eql(u8, v, ref),
             else => false,
         };
     }

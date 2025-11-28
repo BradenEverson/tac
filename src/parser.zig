@@ -13,6 +13,12 @@ pub const Expr = union(enum) {
 
 pub const Literal = union(enum) {
     number: i64,
+
+    pub fn toAsm(self: *const Literal, alloc: std.mem.Allocator) ![]const u8 {
+        switch (self.*) {
+            .number => |n| return std.fmt.allocPrint(alloc, "${d}", .{n}),
+        }
+    }
 };
 
 pub const BinaryOp = enum {

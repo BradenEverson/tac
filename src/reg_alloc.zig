@@ -20,6 +20,26 @@ pub const Register = switch (builtin.cpu.arch) {
         r13,
         r14,
         r15,
+
+        const Self = @This();
+        pub fn toAsm(self: *const Self) []const u8 {
+            return switch (self.*) {
+                .rax => "%rax",
+                .rbx => "%rbx",
+                .rcx => "%rcx",
+                .rdx => "%rdx",
+                .rsi => "%rsi",
+                .rdi => "%rdi",
+                .r8 => "%r8",
+                .r9 => "%r9",
+                .r10 => "%r10",
+                .r11 => "%r11",
+                .r12 => "%r12",
+                .r13 => "%r13",
+                .r14 => "%r14",
+                .r15 => "%r15",
+            };
+        }
     },
 
     else => @compileError("Unsupported CPU Arch"),
@@ -62,7 +82,12 @@ pub const RegisterAllocator = struct {
 
             for (i..self.stream.len) |j| {
                 const curr = self.stream[j];
-                if (curr.arg1.dep_on(i) or curr.arg2.dep_on(i)) {
+                if (self.stream[i].op == .assignment) {
+                    const variable = self.stream[i].arg1.variable;
+                    if (curr.arg1.dep_on_var(variable) or curr.arg2.dep_on_var(variable)) {
+                        last_instr_dep = j;
+                    }
+                } else if (curr.arg1.dep_on(i) or curr.arg2.dep_on(i)) {
                     last_instr_dep = j;
                 }
             }
@@ -75,7 +100,7 @@ pub const RegisterAllocator = struct {
 
             for (0..self.used.len) |reg| {
                 if (self.used[reg]) |r| {
-                    if (r < i) {
+                    if (r <= i) {
                         self.used[reg] = context[i].last_instr_dep;
                         chosenReg = @enumFromInt(reg);
                         break;
@@ -137,6 +162,6 @@ test "Complex AST register allocation" {
 
     try std.testing.expectEqual(.rax, out.items[0].register);
     try std.testing.expectEqual(.rbx, out.items[1].register);
-    try std.testing.expectEqual(.rcx, out.items[2].register);
+    try std.testing.expectEqual(.rax, out.items[2].register);
     try std.testing.expectEqual(.rax, out.items[3].register);
 }

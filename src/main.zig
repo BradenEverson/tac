@@ -51,7 +51,7 @@ pub fn main() void {
         register_allocator.solve(&instructions, alloc) catch @panic("Failed to allocate registers");
 
         var assembler = Assembler.init("generated.S", instructions.items) catch @panic("Failed to create assembly file");
-        defer assembler.deinit();
+        defer assembler.deinit(alloc);
 
         assembler.translate(alloc) catch @panic("Failed to generate assembly");
     } else {

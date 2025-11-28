@@ -10,6 +10,10 @@ const ir = @import("ir.zig");
 const TacIrGenerator = ir.TacIrGenerator;
 const ThreeAddressCode = ir.ThreeAddressCode;
 
+const reg_alloc = @import("reg_alloc.zig");
+const RegisterAllocator = reg_alloc.RegisterAllocator;
+const RegisterAllocatedInstruction = reg_alloc.RegisterAllocatedInstruction;
+
 const Assembler = @import("assembler.zig").Assembler;
 
 pub fn main() void {
@@ -41,7 +45,12 @@ pub fn main() void {
 
         const tac = ir_generator.ir_stream.items;
 
-        var assembler = Assembler.init("generated.S", tac) catch @panic("Failed to create assembly file");
+        var register_allocator = RegisterAllocator.init(tac);
+
+        var instructions = std.ArrayList(RegisterAllocatedInstruction){};
+        register_allocator.solve(&instructions, alloc) catch @panic("Failed to allocate registers");
+
+        var assembler = Assembler.init("generated.S", instructions.items) catch @panic("Failed to create assembly file");
         defer assembler.deinit();
 
         assembler.translate(alloc) catch @panic("Failed to generate assembly");

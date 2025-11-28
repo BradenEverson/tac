@@ -2,14 +2,13 @@
 
 const std = @import("std");
 
-const ir = @import("ir.zig");
-const ThreeAddressCode = ir.ThreeAddressCode;
+const Instruction = @import("reg_alloc.zig").RegisterAllocatedInstruction;
 
 pub const Assembler = struct {
-    ir: []ThreeAddressCode,
+    ir: []Instruction,
     fd: std.fs.File,
 
-    pub fn init(name: []const u8, codes: []ThreeAddressCode) !Assembler {
+    pub fn init(name: []const u8, codes: []Instruction) !Assembler {
         const fd = try std.fs.cwd().createFile(name, .{});
         return Assembler{ .ir = codes, .fd = fd };
     }

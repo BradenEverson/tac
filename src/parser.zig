@@ -16,7 +16,7 @@ pub const Literal = union(enum) {
 
     pub fn toAsm(self: *const Literal, alloc: std.mem.Allocator) ![]const u8 {
         switch (self.*) {
-            .number => |n| return std.fmt.allocPrint(alloc, "${d}", .{n}),
+            .number => |n| return std.fmt.allocPrint(alloc, "{d}", .{n}),
         }
     }
 };
@@ -32,7 +32,7 @@ pub const BinaryOp = enum {
             .add => "add",
             .sub => "sub",
             .mul => "imul",
-            .div => "idiv",
+            .div => @panic("Division not implemented"),
         };
     }
 };
@@ -240,7 +240,6 @@ test "simple statement parsing" {
 
 test "toAsm" {
     try std.testing.expectEqualStrings(BinaryOp.mul.toAsm(), "imul");
-    try std.testing.expectEqualStrings(BinaryOp.div.toAsm(), "idiv");
     try std.testing.expectEqualStrings(BinaryOp.add.toAsm(), "add");
     try std.testing.expectEqualStrings(BinaryOp.sub.toAsm(), "sub");
 }

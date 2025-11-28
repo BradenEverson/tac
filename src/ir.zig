@@ -16,6 +16,13 @@ pub const ThreeAddressCode = struct {
 pub const Operator = union(enum) {
     binary_op: BinaryOp,
     assignment,
+
+    pub fn toAsm(self: *const Operator) []const u8 {
+        return switch (self.*) {
+            .binary_op => |b| b.toAsm(),
+            .assignment => @panic("todo"),
+        };
+    }
 };
 
 pub const Operand = union(enum) {

@@ -20,6 +20,15 @@ pub const BinaryOp = enum {
     sub,
     mul,
     div,
+
+    pub fn toAsm(self: *const BinaryOp) []const u8 {
+        return switch (self.*) {
+            .add => "add",
+            .sub => "sub",
+            .mul => "imul",
+            .div => "idiv",
+        };
+    }
 };
 
 pub const ParserError = error{
@@ -221,4 +230,11 @@ test "simple statement parsing" {
     try std.testing.expectEqual(.add, ast.items[0].binary_op.op);
     try std.testing.expectEqual(1, ast.items[0].binary_op.left.literal.number);
     try std.testing.expectEqual(2, ast.items[0].binary_op.right.literal.number);
+}
+
+test "toAsm" {
+    try std.testing.expectEqualStrings(BinaryOp.mul.toAsm(), "imul");
+    try std.testing.expectEqualStrings(BinaryOp.div.toAsm(), "idiv");
+    try std.testing.expectEqualStrings(BinaryOp.add.toAsm(), "add");
+    try std.testing.expectEqualStrings(BinaryOp.sub.toAsm(), "sub");
 }

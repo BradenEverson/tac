@@ -25,6 +25,13 @@ pub const Operand = union(enum) {
     reference: usize,
     /// A variable tag (i.e. "a")
     variable: []const u8,
+
+    pub fn dep_on(self: *const Operand, ref: usize) bool {
+        return switch (self.*) {
+            .reference => |r| r == ref,
+            else => false,
+        };
+    }
 };
 
 pub const TacIrGenerator = struct {

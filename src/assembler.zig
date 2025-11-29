@@ -5,6 +5,7 @@ const std = @import("std");
 const reg_alloc = @import("reg_alloc.zig");
 const Instruction = reg_alloc.RegisterAllocatedInstruction;
 const Register = reg_alloc.Register;
+
 const Operand = @import("ir.zig").Operand;
 
 pub const Assembler = struct {

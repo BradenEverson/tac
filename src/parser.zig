@@ -1,3 +1,5 @@
+//! Parser from tokens to an AST
+
 const std = @import("std");
 
 const tokenizer = @import("tokenizer.zig");

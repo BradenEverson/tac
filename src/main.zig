@@ -1,3 +1,11 @@
+//! Main assembler program that:
+//! - loads a provided file
+//! - tokenizes it
+//! - parses the tokens
+//! - Creates a stream of Three Address Codes
+//! - Allocates registers for these instructions
+//! - Translates the final stream to valid NASM x86-64 asm
+
 const std = @import("std");
 const tokenizer = @import("tokenizer.zig");
 const Token = tokenizer.Token;

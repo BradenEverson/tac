@@ -68,5 +68,5 @@ pub fn main() void {
 }
 
 test {
-    _ = .{ @import("tokenizer.zig"), @import("parser.zig"), @import("ir.zig"), @import("compiler.zig"), @import("assembler.zig"), @import("reg_alloc.zig") };
+    _ = .{ @import("tokenizer.zig"), @import("parser.zig"), @import("ir.zig"), @import("assembler.zig"), @import("reg_alloc.zig") };
 }

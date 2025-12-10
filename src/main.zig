@@ -25,7 +25,10 @@ const RegisterAllocatedInstruction = reg_alloc.RegisterAllocatedInstruction;
 const Assembler = @import("assembler.zig").Assembler;
 
 pub fn main() void {
-    const alloc = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+
+    const alloc = gpa.allocator();
 
     var args = std.process.args();
     _ = args.next(); // process name
@@ -56,10 +59,12 @@ pub fn main() void {
         var register_allocator = RegisterAllocator.init(tac);
 
         var instructions = std.ArrayList(RegisterAllocatedInstruction){};
+        defer instructions.deinit(alloc);
+
         register_allocator.solve(&instructions, alloc) catch @panic("Failed to allocate registers");
 
         var assembler = Assembler.init("generated.S", instructions.items) catch @panic("Failed to create assembly file");
-        defer assembler.deinit(alloc);
+        defer assembler.deinit();
 
         assembler.translate(alloc) catch @panic("Failed to generate assembly");
     } else {

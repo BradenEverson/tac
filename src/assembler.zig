@@ -18,9 +18,8 @@ pub const Assembler = struct {
         return Assembler{ .ir = codes, .fd = fd, .mappings = std.StringHashMapUnmanaged(Register){} };
     }
 
-    pub fn deinit(self: *Assembler, alloc: std.mem.Allocator) void {
+    pub fn deinit(self: *Assembler) void {
         self.fd.close();
-        self.mappings.deinit(alloc);
     }
 
     pub fn operandToAsm(self: *Assembler, operand: Operand, alloc: std.mem.Allocator) ![]const u8 {
@@ -63,6 +62,11 @@ pub const Assembler = struct {
     }
 
     pub fn translate(self: *Assembler, alloc: std.mem.Allocator) !void {
+        var arena = std.heap.ArenaAllocator.init(alloc);
+        defer arena.deinit();
+
+        const a_alloc = arena.allocator();
+
         _ = try self.fd.write(
             \\section .bss
             \\section .text
@@ -73,7 +77,7 @@ pub const Assembler = struct {
         );
 
         for (self.ir) |tac| {
-            const instr = try self.translateSingle(tac, alloc);
+            const instr = try self.translateSingle(tac, a_alloc);
             _ = try self.fd.write(instr);
         }
 
